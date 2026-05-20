@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' chrome-extension://2c51a85e-42d2-4c4e-b213-3e795caec583; connect-src 'self' https://api.mymemory.translated.net; media-src 'self' https://translate.googleapis.com data: blob:; object-src 'self'">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <title>Text Reader</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="text-container" class="text-container">
+        <div id="text-area" contenteditable="true"></div>
+    </div>
+    <div class="wrapper">
+        <div class="setting hidden">
+            <div class="ranges">
+                <section>
+                    <label for="speed">Speed</label>
+                    <input type="range" id="speed" min="0.1" max="1.5" step="0.1" value="0.1">
+                </section>
+                <section>
+                    <label for="pitch">Pitch</label>
+                    <input type="range" id="pitch" min="0.1" max="3" step="0.1" value="1">
+                </section>
+                <section>
+                    <button class="hint-btn" id="length-help" type="button">?</button>
+                </section>
+            </div>
+            <div class="setting-voice">
+                <select id="voices"></select>
+                <section class="setting-start">
+                    <label>Start over</label>
+                    <input type="checkbox" id="start-over">
+                </section>
+            </div>
+        </div>
+
+        <div class="actions">
+            <section class="play-btn">
+                <button class="play" id="play">&#9658;</button>
+                <button class="line-loop" id="line-loop">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22">
+                    <path d="M3 8h13a4 4 0 0 1 0 8H6"/>
+                    <polyline points="6 12 3 8 6 4"/>
+                    <line x1="3" y1="16" x2="10" y2="16"/>
+                  </svg>
+                </button>
+                <button class="pause" id="pause">II</button>
+                <button class="loop" id="loop">&#8629;</button>
+            </section>
+            <section id="font-size-btn" class="hidden">
+                <button id="font-size-decrease">-</button>
+                <button id="font-size-increase">+</button>
+            </section>
+            <section class="mini-setting">
+                <button id="setting-hide">...</button>
+                <section>
+                    <button type="checkbox" id="start-over-btn">Start over</button>
+                </section>
+            </section>
+        </div>
+    </div>
+    <div class="modal" id="modal">
+        <p id="modalFirst"></p>
+        <p id="modalSecond"></p>
+    </div>
+    <script src="service.js"></script>
+    <script src="index.js"></script>
+    <script src="translator.js"></script>
+</body>
+
+</html>
