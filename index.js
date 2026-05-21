@@ -100,10 +100,11 @@ hideButton.addEventListener('click', function () {
 })
 
 document.addEventListener('keydown', function (event) {
-  if (event.ctrlKey && event.code === 'Space' && !event.repeat) {
-    event.preventDefault();
-    textArea.blur();
-    playBtn.click();
+  if (event.code === 'Space' && !event.repeat) {
+    if (document.activeElement !== textArea) {
+      event.preventDefault();
+      playBtn.click();
+    }
   }
 });
 

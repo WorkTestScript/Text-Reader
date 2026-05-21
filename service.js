@@ -428,8 +428,9 @@ function getSentencesForPlayback() {
   if (isLineLooping) {
     const range = getLineLoopRange(sentences.length);
     if (!range) return [];
-    currentSentenceIndex = range.start;
-    return sentences.slice(range.start, range.end + 1);
+    const start = clampNumber(currentSentenceIndex, range.start, range.end);
+    currentSentenceIndex = start;
+    return sentences.slice(start, range.end + 1);
   }
   return sentences.slice(currentSentenceIndex);
 }
