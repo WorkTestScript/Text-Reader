@@ -338,8 +338,10 @@ function highlight() {
   }
 }
 
-function autoscroll() {
+function autoscroll(force = false) {
   if (isLineLooping) return;
+  if (!isPlaing && !force) return;
+  if (window.getSelection().toString().length > 0) return;
 
   const { scrollTop, scrollHeight, clientHeight } = textArea;
   const allDivs = textArea.querySelectorAll('div');
@@ -347,15 +349,24 @@ function autoscroll() {
   const currentDiv = allDivs[currentSentenceIndex];
   const divHeight = currentDiv.offsetHeight;
   const divTop = currentDiv.offsetTop;
-  const middleOfVisibleArea = scrollTop + (clientHeight / 2);
 
-  if (divTop > middleOfVisibleArea) {
-    textArea.scrollTop = divTop - (clientHeight / 2) + (divHeight / 2);
+  if (isPlaing) {
+    // Поведінка під час відтворення: зміщуємо на 2 висоти рядка вище центру
+    const offset = divHeight * 2;
+    textArea.scrollTop = divTop - (clientHeight / 2) + (divHeight / 2) + offset;
+  } else if (force) {
+    // Поведінка при ручній навігації: як у стандартному textarea
+    const padding = 40; // Трохи збільшимо відступ для надійності
+    if (divTop < scrollTop + padding) {
+      textArea.scrollTop = Math.max(0, divTop - padding);
+    } else if (divTop + divHeight > scrollTop + clientHeight - padding) {
+      textArea.scrollTop = divTop + divHeight - clientHeight + padding;
+    }
   }
-  const remainingHeight = Math.floor(scrollHeight - clientHeight - scrollTop);
-  if (remainingHeight < 3 && (textIndex.currentIndex + 1) === textIndex.lastIndex) {
-    textArea.scrollTop = 0;
-  }
+
+  const remainingHeight = Math.floor(scrollHeight - clientHeight - textArea.scrollTop);
+  // Прибираємо автоматичний стрибок вгору звідси, щоб дати дочитати останній рядок.
+  // Скидання скролу відбудеться в кінці відтворення в спеціальних функціях.
 }
 
 function getSelectedVoiceValue() {
@@ -577,10 +588,10 @@ function getUtterance(target, text) {
     activeStyleBtn(target, true);
     target.className = STOP;
     highlight();
+    autoscroll();
   };
 
   utterance.onend = () => {
-    autoscroll();
     activeStyleBtn(target, false);
     target.className = PLAY;
     currentSentenceIndex += 1;
@@ -647,8 +658,8 @@ function finishGooglePlayback() {
 
   if (textIndex.currentIndex === textIndex.lastIndex) {
     currentSentenceIndex = 0;
+    textArea.scrollTop = 0;
   }
-
   if (isLooping && textIndex.lastIndex > 0) {
     textIndex.currentIndex = 0;
     currentSentenceIndex = 0;
@@ -731,6 +742,7 @@ function playNextGoogleChunk(target) {
   activeStyleBtn(target, true);
   target.className = STOP;
   highlight();
+  autoscroll();
   persistPlaybackSettings();
   scheduleGoogleRecovery();
 
@@ -742,7 +754,6 @@ function playNextGoogleChunk(target) {
 function handleGoogleAudioEnded() {
   clearTimeout(googleRecoveryTimer);
   googleRecoveryTimer = null;
-  autoscroll();
   currentSentenceIndex += 1;
   textIndex.currentIndex += 1;
   isPlaing = false;
@@ -758,6 +769,7 @@ function handleGoogleAudioEnded() {
   }
 
   if (textIndex.currentIndex >= textIndex.lastIndex) {
+    textArea.scrollTop = 0;
     finishGooglePlayback();
     return;
   }
@@ -1003,12 +1015,41 @@ function selectedSentence() {
     div.classList.remove('textarea-mark');
     div.onclick = function () {
       if (isPlaing) return;
+      if (window.getSelection().toString().length > 0) return;
       currentSentenceIndex = index;
       if (isLineLooping) {
         lineLoopRange = { start: index, end: index };
       }
+      highlight();
+      autoscroll();
     };
   });
+}
+
+function changeLineSelection(direction) {
+  if (isPlaing) return;
+  const childDivs = textArea.querySelectorAll('div');
+  if (!childDivs.length) return;
+
+  let minIndex = 0;
+  let maxIndex = childDivs.length - 1;
+
+  if (isLineLooping) {
+    const range = getLineLoopRange(childDivs.length);
+    if (range) {
+      minIndex = range.start;
+      maxIndex = range.end;
+    }
+  }
+
+  const newIndex = clampNumber(currentSentenceIndex + direction, minIndex, maxIndex);
+
+  if (newIndex !== currentSentenceIndex) {
+    currentSentenceIndex = newIndex;
+    highlight();
+    autoscroll(true);
+    localStorage.setItem('textToSpeak', textArea.innerHTML);
+  }
 }
 
 function removeSelectedVoice() {

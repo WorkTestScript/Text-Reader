@@ -100,10 +100,16 @@ hideButton.addEventListener('click', function () {
 })
 
 document.addEventListener('keydown', function (event) {
-  if (event.code === 'Space' && !event.repeat) {
-    if (document.activeElement !== textArea) {
+  if (document.activeElement !== textArea) {
+    if (event.code === 'Space' && !event.repeat) {
       event.preventDefault();
       playBtn.click();
+    } else if (event.code === 'ArrowUp') {
+      event.preventDefault();
+      changeLineSelection(-1);
+    } else if (event.code === 'ArrowDown') {
+      event.preventDefault();
+      changeLineSelection(1);
     }
   }
 });
@@ -116,7 +122,7 @@ if (savedText) {
 speedRange.value = localStorage.getItem('selectedSpeed') || 1;
 pitchRange.value = localStorage.getItem('selectedPitch') || 1;
 isLooping = localStorage.getItem('isLooping') === 'true';
-isLineLooping = localStorage.getItem('isLineLooping') === 'true';
+isLineLooping = false;
 startOverCheckbox.checked = checked;
 if (checked) startOverBtn.classList.add('start-over-btn-checked');
 fontSize = parseInt(localStorage.getItem('fontSize')) || 16;
@@ -124,10 +130,6 @@ textArea.style.fontSize = fontSize + 'px';
 
 if (isLooping) {
   activeStyleBtn(loopBtn, isLooping);
-}
-
-if (isLineLooping) {
-  activeStyleBtn(lineLoopBtn, isLineLooping);
 }
 
 updatePitchAvailability();
