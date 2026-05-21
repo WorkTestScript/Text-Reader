@@ -28,6 +28,7 @@ let currentSentenceIndex = 0;
 let lineLoopRange = null;
 let activeEngine = null;
 let audioPlayer = null;
+let browserQueue = [];
 let googleQueue = [];
 let currentGoogleChunk = null;
 let googleRetryCount = 0;
@@ -511,6 +512,8 @@ function getGoogleAudioUrl(text, retryCount = 0) {
 function ensureAudioPlayer() {
   if (!audioPlayer) {
     audioPlayer = new Audio();
+    audioPlayer.referrerPolicy = 'no-referrer';
+    audioPlayer.setAttribute('referrerpolicy', 'no-referrer');
     audioPlayer.preload = 'auto';
     audioPlayer.addEventListener('ended', handleGoogleAudioEnded);
     audioPlayer.addEventListener('error', handleGoogleAudioError);
@@ -545,6 +548,7 @@ function cancelAllPlayback() {
   if (canUseBrowserSpeech()) {
     synth.cancel();
   }
+  browserQueue = [];
   cancelGooglePlayback();
   isPlaing = false;
   resetPauseButton();
@@ -571,20 +575,22 @@ function getUtterance(target, text) {
     currentSentenceIndex += 1;
     textIndex.currentIndex += 1;
     isPlaing = false;
-    if (isLineLooping && textIndex.currentIndex === textIndex.lastIndex) {
+    if (isLineLooping && textIndex.currentIndex >= textIndex.lastIndex) {
       const range = getLineLoopRange(textArea.querySelectorAll('div').length);
       currentSentenceIndex = range ? range.start : 0;
       textIndex.currentIndex = 0;
       startSpeak(target);
       return;
     }
-    if (textIndex.currentIndex === textIndex.lastIndex) {
+    if (textIndex.currentIndex >= textIndex.lastIndex) {
       currentSentenceIndex = 0;
+      if (isLooping) {
+        textIndex.currentIndex = 0;
+        startSpeak(target);
+      }
+      return;
     }
-    if (isLooping && textIndex.currentIndex === textIndex.lastIndex) {
-      textIndex.currentIndex = 0;
-      startSpeak(target);
-    }
+    playNextBrowserChunk(target);
   };
 
   utterance.onerror = (event) => {
@@ -599,6 +605,13 @@ function getUtterance(target, text) {
 
   persistPlaybackSettings();
   return utterance;
+}
+
+function playNextBrowserChunk(target) {
+  if (!browserQueue.length) return;
+  const nextText = browserQueue.shift();
+  const utterance = getUtterance(target, nextText);
+  synth.speak(utterance);
 }
 
 function finishGooglePlayback() {
@@ -763,14 +776,11 @@ function startBrowserSpeak(target, sentences) {
   if (canUseBrowserSpeech()) {
     synth.cancel();
   }
-  textIndex.lastIndex = 0;
+  browserQueue = [...sentences];
+  textIndex.lastIndex = browserQueue.length;
   textIndex.currentIndex = 0;
 
-  sentences.forEach((str) => {
-    textIndex.lastIndex += 1;
-    const utterance = getUtterance(target, str);
-    synth.speak(utterance);
-  });
+  playNextBrowserChunk(target);
 }
 
 function startSpeak(target) {
