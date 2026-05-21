@@ -494,6 +494,16 @@ function getLineLoopActivationRange() {
     || getLineLoopRange(textArea.querySelectorAll('div').length);
 }
 
+function clearEditorSelection() {
+  const selection = window.getSelection();
+  if (!selection || !selection.rangeCount) return;
+
+  const range = selection.getRangeAt(0);
+  if (!textArea.contains(range.commonAncestorContainer)) return;
+
+  selection.removeAllRanges();
+}
+
 function restartLineLoopIfPlaying() {
   if (playBtn.className !== STOP) return;
   shouldRetryPlayback = true;
@@ -863,6 +873,7 @@ function handlePlay({ target }) {
   if (target.className === PLAY) {
     shouldRetryPlayback = true;
     isPlaing = true;
+    clearEditorSelection();
     startSpeak(target);
     return;
   }
