@@ -339,6 +339,7 @@ function highlight() {
 }
 
 function autoscroll(force = false) {
+  if (!isAutoscrollEnabled) return;
   if (isLineLooping) return;
   if (!isPlaing && !force) return;
   if (window.getSelection().toString().length > 0) return;
@@ -810,16 +811,6 @@ function startSpeak(target) {
   const retryRequested = shouldRetryPlayback;
   cancelAllPlayback();
   shouldRetryPlayback = retryRequested;
-
-  if (startOverCheckbox.checked) {
-    if (isLineLooping) {
-      const range = getLineLoopRange(textArea.querySelectorAll('div').length);
-      currentSentenceIndex = range ? range.start : 0;
-    } else {
-      currentSentenceIndex = 0;
-      textArea.scrollTop = 0;
-    }
-  }
 
   const sentences = getSentencesForPlayback();
   if (!sentences.length) return;

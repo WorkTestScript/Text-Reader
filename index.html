@@ -4,10 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' chrome-extension://2c51a85e-42d2-4c4e-b213-3e795caec583; connect-src 'self' https://api.mymemory.translated.net; media-src 'self' https://translate.googleapis.com data: blob:; object-src 'self'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' chrome-extension://2c51a85e-42d2-4c4e-b213-3e795caec583; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.mymemory.translated.net; media-src 'self' https://translate.googleapis.com data: blob:; object-src 'self'">
     <meta name="referrer" content="no-referrer">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <title>Text Reader</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Georgia&family=Verdana&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -29,13 +32,23 @@
                 <section>
                     <button class="hint-btn" id="length-help" type="button">?</button>
                 </section>
+                <section>
+                    <button class="theme-btn" id="theme-toggle-btn" type="button">Theme</button>
+                </section>
+                <section id="font-size-btn">
+                    <button id="font-size-decrease">-</button>
+                    <button id="font-size-increase">+</button>
+                </section>
             </div>
             <div class="setting-voice">
                 <select id="voices"></select>
-                <section class="setting-start">
-                    <label>Start over</label>
-                    <input type="checkbox" id="start-over">
-                </section>
+                <select id="font-select">
+                    <option value="font-roboto">Roboto</option>
+                    <option value="font-open-sans">Open Sans</option>
+                    <option value="font-lato">Lato</option>
+                    <option value="font-georgia">Georgia</option>
+                    <option value="font-verdana">Verdana</option>
+                </select>
             </div>
         </div>
 
@@ -52,14 +65,10 @@
                 <button class="pause" id="pause">II</button>
                 <button class="loop" id="loop">&#8629;</button>
             </section>
-            <section id="font-size-btn" class="hidden">
-                <button id="font-size-decrease">-</button>
-                <button id="font-size-increase">+</button>
-            </section>
             <section class="mini-setting">
                 <button id="setting-hide">...</button>
                 <section>
-                    <button type="checkbox" id="start-over-btn">Start over</button>
+                    <button id="autoscroll-btn">Autoscroll</button>
                 </section>
             </section>
         </div>
