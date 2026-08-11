@@ -424,3 +424,23 @@ body {
   height: 100vh;
   margin: 0;
 }
+
+#text-area .line-loop-active {
+  position: relative;
+  /* Add some padding to the left to make space for the bar and prevent text overlap */
+  padding-left: 12px;
+  /* Add a transition for a smoother effect */
+  transition: padding-left 0.2s ease-in-out;
+}
+
+#text-area .line-loop-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 1.3em; /* Match the line-height for a consistent height */
+  width: 4px;
+  background-color: var(--button-bg); /* Use the theme's accent color */
+  border-radius: 2px;
+}

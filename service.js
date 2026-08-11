@@ -19,6 +19,21 @@ const MAX_MAX_FRAGMENT_LENGTH = 200;
 const CUSTOM_LENGTH_STORAGE_KEY = 'customMaxFragmentLength';
 const MIN_COMMA_SPLIT_WORDS = 5;
 const MIN_COMMA_SPLIT_CHARS = 30;
+
+const TITLE_ABBREVIATIONS = [
+  'Mr.', 'Mrs.', 'Ms.', 'Dr.', 'Prof.', 'Capt.', 'Lt.', 'Col.', 'Gen.', 'Sr.', 'Jr.',
+  'Rev.', 'Fr.', 'Maj.', 'Sgt.', 'Cmdr.', 'Atty.', 'Hon.', 'Gov.', 'Pres.', 'Supt.',
+  'Det.', 'Ofc.', 'Cpl.', 'Pvt.', 'Adm.', 'Amb.', 'Rd.', 'St.', 'Ave.', 'Blvd.',
+  'Ct.', 'Ln.', 'Sq.', 'Pl.', 'Fwy.', 'Hwy.', 'P.S.', 'E.g.', 'I.e.', 'vs.', 'etc.',
+  'Fig.', 'Figs.', 'No.', 'Nos.', 'Vol.', 'Vols.', 'p.', 'pp.', 'ed.', 'eds.', 'Rev.',
+  'Assoc.', 'Dept.', 'Corp.', 'Inc.', 'Ltd.', 'Co.', 'Bro.', 'Bros.', 'Chap.', 'Chaps.',
+  'Conf.', 'Confs.', 'Corp.', 'Dist.', 'Ex.', 'Fed.', 'Intl.', 'Jr.', 'M.D.', 'Ph.D.',
+  'S.A.', 'U.K.', 'U.S.', 'U.S.A.', 'approx.', 'cont.', 'dept.', 'esp.', 'ext.',
+  'info.', 'mgr.', 'min.', 'misc.', 'natl.', 'obs.', 'orig.', 'para.', 'ph.', 'pub.',
+  're.', 'sec.', 'tech.', 'temp.', 'univ.', 'v.', 'vs.', 'w.p.m.', 'yr.', 'yrs.'
+];
+const PERIOD_PLACEHOLDER = '__DOT__'; // A unique placeholder that is unlikely to be in user text
+
 let voices = [];
 let fontSize = 16;
 let isLooping = false;
@@ -38,6 +53,29 @@ let textIndex = {
   currentIndex: 0,
   lastIndex: 0
 };
+
+function preProcessTextForAbbreviations(text) {
+  let processedText = text;
+  // Sort abbreviations by length, longest first, to handle cases like "U.S." vs "U.S.A."
+  const sortedAbbreviations = [...TITLE_ABBREVIATIONS].sort((a, b) => b.length - a.length);
+
+  sortedAbbreviations.forEach(abbr => {
+    const escapedAbbr = abbr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Match the abbreviation as a whole word at the beginning of the pattern
+    const regex = new RegExp(`\\b${escapedAbbr}(?!\\w)`, 'g');
+
+    processedText = processedText.replace(regex, match => {
+      // Inside the matched abbreviation, replace all periods with a placeholder
+      return match.replace(/\./g, PERIOD_PLACEHOLDER);
+    });
+  });
+  return processedText;
+}
+
+function postProcessTextForAbbreviations(text) {
+  // Replace all placeholders back to periods.
+  return text.replace(/__DOT__/g, '.');
+}
 
 function getMaxFragmentLength() {
   const selectedLength = getConfiguredMaxFragmentLength();
@@ -276,9 +314,11 @@ function splitLongSentences(sentences) {
 }
 
 function extractSentencesFromText(text) {
-  return text
+  const preProcessedText = preProcessTextForAbbreviations(text);
+  return preProcessedText
     .replace(/\r?\n/g, ' ')
     .split(/(?<=[.!?])\s+/)
+    .map(sentence => postProcessTextForAbbreviations(sentence))
     .map(normalizeText)
     .filter(Boolean);
 }
@@ -945,6 +985,7 @@ function handleLineLoop({ target }) {
   } else {
     lineLoopRange = null;
   }
+  highlightLineLoopRange();
   activeStyleBtn(target, isLineLooping);
   localStorage.setItem('isLineLooping', isLineLooping);
 }
@@ -953,6 +994,7 @@ function deactivateLineLoop() {
   if (!isLineLooping) return;
   isLineLooping = false;
   lineLoopRange = null;
+  highlightLineLoopRange();
   activeStyleBtn(lineLoopBtn, false);
   localStorage.setItem('isLineLooping', false);
 }
@@ -987,12 +1029,25 @@ function updateSpeechOnChange() {
 function reformatText() {
   playChange(false);
   currentSentenceIndex = 0;
-  lineLoopRange = null;
+  deactivateLineLoop();
   const cleanedText = getEditorPlainText();
   const sentencesArray = extractSentencesFromText(cleanedText);
   const sentences = splitLongSentences(sentencesArray);
   textArea.innerHTML = sentences.map(item => `<div>${item}</div>`).join('');
   selectedSentence();
+}
+
+function highlightLineLoopRange() {
+  const allDivs = textArea.querySelectorAll('div');
+  allDivs.forEach(div => div.classList.remove('line-loop-active'));
+
+  if (isLineLooping && lineLoopRange) {
+    for (let i = lineLoopRange.start; i <= lineLoopRange.end; i++) {
+      if (allDivs[i]) {
+        allDivs[i].classList.add('line-loop-active');
+      }
+    }
+  }
 }
 
 function updatePitchAvailability() {
@@ -1007,9 +1062,18 @@ function selectedSentence() {
     div.onclick = function () {
       if (isPlaing) return;
       if (window.getSelection().toString().length > 0) return;
-      currentSentenceIndex = index;
+
       if (isLineLooping) {
-        lineLoopRange = { start: index, end: index };
+        // If line loop is active, only allow clicks within the loop range.
+        if (lineLoopRange && index >= lineLoopRange.start && index <= lineLoopRange.end) {
+          currentSentenceIndex = index;
+        } else {
+          // Click is outside the loop, do nothing.
+          return;
+        }
+      } else {
+        // Normal behavior when line loop is not active.
+        currentSentenceIndex = index;
       }
       highlight();
       autoscroll();

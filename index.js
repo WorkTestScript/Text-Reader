@@ -106,11 +106,10 @@ textArea.addEventListener('focus', function (event) {
     event.preventDefault();
 });
 
-textArea.addEventListener('mousedown', function () {
-    deactivateLineLoop();
-});
+
 
 textArea.addEventListener('paste', (event) => {
+    deactivateLineLoop();
     event.preventDefault();
     currentSentenceIndex = 0;
     const text = (event.clipboardData || window.clipboardData).getData('text/plain');
@@ -122,6 +121,10 @@ textArea.addEventListener('paste', (event) => {
         range.insertNode(textNode);
         range.collapse(false);
     }
+});
+
+textArea.addEventListener('input', () => {
+    deactivateLineLoop();
 });
 
 fontSizeBtn.addEventListener('click', function (event) {
@@ -170,6 +173,9 @@ document.addEventListener('keydown', function (event) {
 const savedText = localStorage.getItem('textToSpeak');
 if (savedText) {
     textArea.innerHTML = savedText;
+    // Clear any line-loop highlights that were persisted in localStorage
+    const allDivs = textArea.querySelectorAll('div');
+    allDivs.forEach(div => div.classList.remove('line-loop-active'));
 }
 
 speedRange.value = localStorage.getItem('selectedSpeed') || 1;
