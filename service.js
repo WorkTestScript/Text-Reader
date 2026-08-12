@@ -378,36 +378,40 @@ function highlight() {
   }
 }
 
+function smoothScrollTo(target, duration = 500) {
+    const targetPosition = target.offsetTop - (textArea.clientHeight / 2) + (target.offsetHeight / 2);
+    const startPosition = textArea.scrollTop;
+    const distance = targetPosition - startPosition;
+    let startTime = null;
+
+    function animation(currentTime) {
+        if (startTime === null) startTime = currentTime;
+        const timeElapsed = currentTime - startTime;
+        const run = ease(timeElapsed, startPosition, distance, duration);
+        textArea.scrollTop = run;
+        if (timeElapsed < duration) requestAnimationFrame(animation);
+    }
+
+    function ease(t, b, c, d) {
+        t /= d / 2;
+        if (t < 1) return c / 2 * t * t + b;
+        t--;
+        return -c / 2 * (t * (t - 2) - 1) + b;
+    }
+
+    requestAnimationFrame(animation);
+}
+
 function autoscroll(force = false) {
   if (!isAutoscrollEnabled) return;
-  if (isLineLooping) return;
-  if (!isPlaing && !force) return;
+  if (!isPlaing && !force && !isLineLooping) return;
   if (window.getSelection().toString().length > 0) return;
 
-  const { scrollTop, scrollHeight, clientHeight } = textArea;
   const allDivs = textArea.querySelectorAll('div');
   if (!allDivs.length || !allDivs[currentSentenceIndex]) return;
   const currentDiv = allDivs[currentSentenceIndex];
-  const divHeight = currentDiv.offsetHeight;
-  const divTop = currentDiv.offsetTop;
 
-  if (isPlaing) {
-    // Поведінка під час відтворення: зміщуємо на 2 висоти рядка вище центру
-    const offset = divHeight * 2;
-    textArea.scrollTop = divTop - (clientHeight / 2) + (divHeight / 2) + offset;
-  } else if (force) {
-    // Поведінка при ручній навігації: як у стандартному textarea
-    const padding = 40; // Трохи збільшимо відступ для надійності
-    if (divTop < scrollTop + padding) {
-      textArea.scrollTop = Math.max(0, divTop - padding);
-    } else if (divTop + divHeight > scrollTop + clientHeight - padding) {
-      textArea.scrollTop = divTop + divHeight - clientHeight + padding;
-    }
-  }
-
-  const remainingHeight = Math.floor(scrollHeight - clientHeight - textArea.scrollTop);
-  // Прибираємо автоматичний стрибок вгору звідси, щоб дати дочитати останній рядок.
-  // Скидання скролу відбудеться в кінці відтворення в спеціальних функціях.
+  smoothScrollTo(currentDiv);
 }
 
 function getSelectedVoiceValue() {
@@ -982,6 +986,7 @@ function handleLineLoop({ target }) {
       currentSentenceIndex = lineLoopRange.start;
     }
     restartLineLoopIfPlaying();
+    autoscroll(true);
   } else {
     lineLoopRange = null;
   }
@@ -1076,7 +1081,7 @@ function selectedSentence() {
         currentSentenceIndex = index;
       }
       highlight();
-      autoscroll();
+      autoscroll(true);
     };
   });
 }
