@@ -237,6 +237,32 @@ function splitTextBalancedByLength(text, maxLength) {
   ));
 }
 
+function splitByQuoteBoundaries(sentence) {
+  const boundaryRegex = /"(\s+)"/g;
+  const boundaries = [];
+  let match;
+
+  while ((match = boundaryRegex.exec(sentence)) !== null) {
+    const openQuoteIndex = match.index + match[0].length - 1;
+    boundaries.push(openQuoteIndex);
+  }
+
+  if (!boundaries.length) return null;
+
+  const chunks = [];
+  let start = 0;
+  boundaries.forEach(boundary => {
+    const part = sentence.slice(start, boundary).trim();
+    if (part) chunks.push(part);
+    start = boundary;
+  });
+
+  const lastPart = sentence.slice(start).trim();
+  if (lastPart) chunks.push(lastPart);
+
+  return chunks.length > 1 ? chunks : null;
+}
+
 function countWords(text) {
   return normalizeText(text).split(/\s+/).filter(Boolean).length;
 }
@@ -276,6 +302,12 @@ function hardSplitSentence(sentence, maxLength) {
 function splitSentenceByLength(sentence, maxLength, allowCommaSplit = true) {
   const normalizedSentence = normalizeText(sentence);
   if (!normalizedSentence) return [];
+
+  const quoteChunks = splitByQuoteBoundaries(normalizedSentence);
+  if (quoteChunks) {
+    return quoteChunks.flatMap(chunk => splitSentenceByLength(chunk, maxLength, allowCommaSplit));
+  }
+
   if (normalizedSentence.length <= maxLength) return [normalizedSentence];
   if (allowCommaSplit) {
     const commaChunks = splitOnceByComma(normalizedSentence, maxLength);
