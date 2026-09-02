@@ -3,7 +3,6 @@ const PLAY = "play";
 const PAUSE = "pause";
 const RESUME = "resume";
 const STOP = 'stop';
-const LOOP = 'loop';
 const GOOGLE_VOICE_ID = 'google-en-gb-online';
 const GOOGLE_VOICE_LABEL = '🇬🇧 Google English UK';
 const GOOGLE_VOICE_US_ID = 'google-en-us-online';
@@ -1063,10 +1062,11 @@ function handlePause({ target }) {
   }
 }
 
-function handleLoop({ target }) {
-  if (target.className !== LOOP) return;
+function handleLoop(button = loopBtn) {
   isLooping = !isLooping;
-  activeStyleBtn(target, isLooping);
+  activeStyleBtn(button, isLooping);
+  button.classList.toggle('looping', isLooping);
+  localStorage.setItem('isLooping', isLooping);
 }
 
 function handleLineLoop({ target }) {

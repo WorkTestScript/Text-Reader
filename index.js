@@ -131,8 +131,8 @@ fontSizeBtn.addEventListener('click', function (event) {
     changeFontSize(event)
 });
 
-loopBtn.addEventListener('click', function (event) {
-    handleLoop(event);
+loopBtn.addEventListener('click', function () {
+    handleLoop(loopBtn);
 });
 
 lineLoopBtn.addEventListener('click', function (event) {
