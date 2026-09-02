@@ -31,19 +31,45 @@ document.addEventListener('DOMContentLoaded', function () {
       });
   }
 
+  function cleanWordText(word) {
+    if (!word) return '';
+    return word.replace(/^[^a-zA-Z0-9а-яА-ЯіїєґІЇЄҐ]+|[^a-zA-Z0-9а-яА-ЯіїєґІЇЄҐ]+$/gu, '').trim();
+  }
+
   function getWordAtCaret() {
     const selection = window.getSelection();
-    if (!selection.rangeCount) return '';
-    const range = selection.getRangeAt(0).cloneRange();
-    const containerNode = range.startContainer;
-    let startOffset = range.startOffset;
-    range.setStart(containerNode, 0);
-    let textBeforeCaret = range.toString().slice(0, startOffset);
-    range.setEnd(containerNode, containerNode.length);
-    let textAfterCaret = range.toString().slice(startOffset);
-    let wordStart = textBeforeCaret.lastIndexOf(' ') + 1;
-    let wordEnd = textAfterCaret.indexOf(' ') !== -1 ? textAfterCaret.indexOf(' ') : textAfterCaret.length;
-    return textBeforeCaret.slice(wordStart) + textAfterCaret.slice(0, wordEnd);
+    if (!selection || !selection.rangeCount) return '';
+    const range = selection.getRangeAt(0);
+    let node = range.startContainer;
+    let offset = range.startOffset;
+
+    if (node.nodeType !== Node.TEXT_NODE) {
+      if (node.childNodes && node.childNodes[offset]) {
+        node = node.childNodes[offset];
+        if (node.nodeType === Node.TEXT_NODE) {
+          offset = 0;
+        } else {
+          return '';
+        }
+      } else {
+        return '';
+      }
+    }
+
+    const text = node.textContent || '';
+    if (!text) return '';
+
+    let start = Math.min(Math.max(offset, 0), text.length);
+    let end = start;
+
+    while (start > 0 && !/\s/.test(text[start - 1])) {
+      start--;
+    }
+    while (end < text.length && !/\s/.test(text[end])) {
+      end++;
+    }
+
+    return text.slice(start, end);
   }
 
   function openYouglishPage(word) {
@@ -54,34 +80,45 @@ document.addEventListener('DOMContentLoaded', function () {
   textArea.addEventListener('mouseup', function (event) {
     if (event.ctrlKey && event.altKey) {
       let selectedText = window.getSelection().toString().trim();
-      selectedText = selectedText.replace(/[.,!?]/g, '');
+      selectedText = cleanWordText(selectedText);
       if (selectedText) {
         openYouglishPage(selectedText);
-        // console.log('selectText openYouglishPage');
       }
       else {
         const word = getWordAtCaret();
-        if (word) {
-          const cleanWord = word.replace(/[.,!?]/g, '');
+        const cleanWord = cleanWordText(word);
+        if (cleanWord) {
           openYouglishPage(cleanWord);
-          // console.log('clickText openYouglishPage');
         }
       }
     } else if (event.ctrlKey) {
       let selectedText = window.getSelection().toString().trim();
-      selectedText = selectedText.replace(/[.,!?]/g, '');
+      selectedText = cleanWordText(selectedText);
       if (selectedText) {
         const langPair = detectLanguage(selectedText);
         translateText(selectedText, langPair);
-        // console.log('selectText translateText');
       }
       else {
         const word = getWordAtCaret();
-        if (word) {
-          const cleanWord = word.replace(/[.,!?]/g, '');
+        const cleanWord = cleanWordText(word);
+        if (cleanWord) {
           const langPair = detectLanguage(cleanWord);
           translateText(cleanWord, langPair);
-          // console.log('clickText translateText');
+        }
+      }
+    } else if (event.altKey) {
+      event.preventDefault();
+      let selectedText = window.getSelection().toString().trim();
+      selectedText = cleanWordText(selectedText);
+      if (selectedText) {
+        if (typeof speakWord === 'function') {
+          speakWord(selectedText);
+        }
+      } else {
+        const word = getWordAtCaret();
+        const cleanWord = cleanWordText(word);
+        if (cleanWord && typeof speakWord === 'function') {
+          speakWord(cleanWord);
         }
       }
     }

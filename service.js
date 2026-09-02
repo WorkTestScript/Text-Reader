@@ -1,4 +1,4 @@
-﻿const synth = window.speechSynthesis || null;
+const synth = window.speechSynthesis || null;
 const PLAY = "play";
 const PAUSE = "pause";
 const RESUME = "resume";
@@ -128,21 +128,37 @@ function showLengthLimitHelp() {
 
   if (!modal || !modalFirst || !modalSecond) return;
 
-  const command = document.createElement('span');
-  command.className = 'modal-command';
-  command.textContent = 'setting - length:100';
+  modalFirst.innerHTML = `
+    <div class="modal-section">
+      <div class="modal-title">Керування та гарячі клавіші</div>
+      <ul class="modal-list">
+        <li><span class="modal-key">Ctrl + клік</span> <span>Переклад слова (EN ↔ UK)</span></li>
+        <li><span class="modal-key">Ctrl + Alt + клік</span> <span>Вимова на YouGlish</span></li>
+        <li><span class="modal-key">Alt + клік</span> <span>Озвучити слово голосовим движком</span></li>
+        <li><span class="modal-key">Space</span> <span>Відтворення / Пауза</span></li>
+        <li><span class="modal-key">↑ / ↓</span> <span>Перехід між рядками</span></li>
+      </ul>
+    </div>
+  `;
 
-  modalFirst.textContent = 'To change line length, clear the text field and type:';
-  modalSecond.innerHTML = '';
-  modalSecond.appendChild(command);
-  modalSecond.append(
-    document.createElement('br'),
-    'Press Play to save it.',
-    document.createElement('br'),
-    'Allowed values: 50-200.',
-    document.createElement('br'),
-    `Current value: ${currentLimit}.`
-  );
+  modalSecond.innerHTML = `
+    <div class="modal-divider"></div>
+    <div class="modal-section">
+      <div class="modal-title">Налаштування довжини рядка</div>
+      <div class="modal-text">
+        Щоб змінити довжину рядка, очистіть текстове поле та введіть:
+      </div>
+      <div>
+        <span class="modal-command">setting - length:100</span>
+      </div>
+      <div class="modal-text">
+        Натисніть Play (►) для збереження.<br>
+        Допустимі значення: 50–200.<br>
+        Поточне значення: <strong>${currentLimit}</strong>
+      </div>
+    </div>
+  `;
+
   modal.classList.add('active');
 }
 
@@ -156,7 +172,7 @@ function applyLengthLimitCommand() {
   currentSentenceIndex = 0;
   lineLoopRange = null;
   selectedSentence();
-  showModal('Line length limit saved', `New value: ${limit}.`);
+  showModal('Довжину рядка збережено', `Нове значення: ${limit}.`);
   return true;
 }
 
@@ -238,13 +254,13 @@ function splitTextBalancedByLength(text, maxLength) {
 }
 
 function splitByQuoteBoundaries(sentence) {
-  const boundaryRegex = /"(\s+)"/g;
+  const boundaryRegex = /(?:["”»“])\s+(?=[\p{Lu}\d]|["“«„]|[-—–]\s*(?:[\p{Lu}\d]|["“«„]))/gu;
   const boundaries = [];
   let match;
 
   while ((match = boundaryRegex.exec(sentence)) !== null) {
-    const openQuoteIndex = match.index + match[0].length - 1;
-    boundaries.push(openQuoteIndex);
+    const nextChunkStart = match.index + match[0].length;
+    boundaries.push(nextChunkStart);
   }
 
   if (!boundaries.length) return null;
@@ -620,6 +636,59 @@ function ensureAudioPlayer() {
   }
   return audioPlayer;
 }
+
+let wordAudio = null;
+
+function ensureWordAudioPlayer() {
+  if (!wordAudio) {
+    wordAudio = new Audio();
+    wordAudio.referrerPolicy = 'no-referrer';
+    wordAudio.setAttribute('referrerpolicy', 'no-referrer');
+  }
+  return wordAudio;
+}
+
+function getWordGoogleAudioUrl(text) {
+  const isCyrillic = /[а-яА-ЯіїєґІЇЄҐ]/.test(text);
+  const locale = isCyrillic ? 'uk' : getGoogleLocale();
+  return `https://translate.googleapis.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${locale}&q=${encodeURIComponent(text)}&retry=${Date.now()}`;
+}
+
+function speakWordWithBrowser(word) {
+  if (!canUseBrowserSpeech()) return;
+  if (synth.speaking || synth.pending) {
+    synth.cancel();
+  }
+  const utterance = new SpeechSynthesisUtterance(word);
+  const selectedVoice = getSelectedSpeechSynthesisVoice();
+  if (selectedVoice) {
+    utterance.voice = selectedVoice;
+  }
+  utterance.rate = parseFloat(speedRange.value) || 1;
+  utterance.pitch = parseFloat(pitchRange.value) || 1;
+  synth.speak(utterance);
+}
+
+function speakWord(word) {
+  if (!word || !word.trim()) return;
+  const cleanWord = word.trim();
+
+  if (shouldUseGoogleVoice()) {
+    const audio = ensureWordAudioPlayer();
+    audio.pause();
+    audio.currentTime = 0;
+    audio.src = getWordGoogleAudioUrl(cleanWord);
+    audio.playbackRate = parseFloat(speedRange.value) || 1;
+    audio.play().catch(() => {
+      speakWordWithBrowser(cleanWord);
+    });
+    return;
+  }
+
+  speakWordWithBrowser(cleanWord);
+}
+
+window.speakWord = speakWord;
 
 function resetPauseButton() {
   pauseBtn.className = PAUSE;

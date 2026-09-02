@@ -1,4 +1,4 @@
-﻿const textArea = document.querySelector("#text-area");
+const textArea = document.querySelector("#text-area");
 const voiceSelect = document.getElementById("voices");
 const fontSelect = document.getElementById("font-select");
 const speedRange = document.getElementById('speed');
@@ -154,6 +154,18 @@ hideButton.addEventListener('click', function () {
     settingBlock.classList.toggle('hidden');
     textArea.classList.toggle('textarea-height');
 })
+
+window.addEventListener('keydown', function (event) {
+    if (event.key === 'Alt') {
+        event.preventDefault();
+    }
+});
+
+window.addEventListener('keyup', function (event) {
+    if (event.key === 'Alt') {
+        event.preventDefault();
+    }
+});
 
 document.addEventListener('keydown', function (event) {
     if (document.activeElement !== textArea) {
