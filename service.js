@@ -98,16 +98,6 @@ function getConfiguredMaxFragmentLength() {
   return clampNumber(savedLength, MIN_MAX_FRAGMENT_LENGTH, MAX_MAX_FRAGMENT_LENGTH);
 }
 
-function parseLengthLimitCommand(text) {
-  const command = normalizeText(text).match(/^setting\s*-\s*length\s*:\s*(\d+)$/i);
-  if (!command) return null;
-
-  const value = parseInt(command[1], 10);
-  if (Number.isNaN(value)) return null;
-
-  return clampNumber(value, MIN_MAX_FRAGMENT_LENGTH, MAX_MAX_FRAGMENT_LENGTH);
-}
-
 function showModal(firstText, secondText = '') {
   const modal = document.getElementById('modal');
   const modalFirst = document.getElementById('modalFirst');
@@ -145,35 +135,33 @@ function showLengthLimitHelp() {
     <div class="modal-divider"></div>
     <div class="modal-section">
       <div class="modal-title">Налаштування довжини рядка</div>
-      <div class="modal-text">
-        Щоб змінити довжину рядка, очистіть текстове поле та введіть:
-      </div>
-      <div>
-        <span class="modal-command">setting - length:100</span>
-      </div>
-      <div class="modal-text">
-        Натисніть Play (►) для збереження.<br>
-        Допустимі значення: 50–200.<br>
-        Поточне значення: <strong>${currentLimit}</strong>
+      <div class="modal-range-wrapper">
+        <input type="range" id="line-length-range" min="50" max="200" step="5" value="${currentLimit}">
+        <div class="modal-range-label"><span id="line-length-value">${currentLimit}</span></div>
       </div>
     </div>
   `;
 
+  const lengthRange = document.getElementById('line-length-range');
+  const lengthValue = document.getElementById('line-length-value');
+
+  if (lengthRange && lengthValue) {
+    lengthRange.addEventListener('input', function () {
+      const val = parseInt(lengthRange.value, 10);
+      lengthValue.textContent = val;
+      localStorage.setItem(CUSTOM_LENGTH_STORAGE_KEY, val);
+    });
+
+    lengthRange.addEventListener('change', function () {
+      const val = parseInt(lengthRange.value, 10);
+      localStorage.setItem(CUSTOM_LENGTH_STORAGE_KEY, val);
+      if (getEditorPlainText().trim()) {
+        reformatText();
+      }
+    });
+  }
+
   modal.classList.add('active');
-}
-
-function applyLengthLimitCommand() {
-  const limit = parseLengthLimitCommand(textArea.innerText);
-  if (limit === null) return false;
-
-  localStorage.setItem(CUSTOM_LENGTH_STORAGE_KEY, limit);
-  localStorage.removeItem('textToSpeak');
-  textArea.innerHTML = '';
-  currentSentenceIndex = 0;
-  lineLoopRange = null;
-  selectedSentence();
-  showModal('Довжину рядка збережено', `Нове значення: ${limit}.`);
-  return true;
 }
 
 function mergeChunksByRegex(text, maxLength, splitter) {
@@ -969,10 +957,14 @@ function startSpeak(target) {
 }
 
 function activeStyleBtn(target, status) {
+  if (!target) return;
   if (status) {
-    target.style.outline = '2px solid #3498db';
-    target.style.backgroundColor = '#4f5254';
+    target.classList.add('btn-active');
+    target.style.outline = '2px solid var(--button-active-bg)';
+    target.style.backgroundColor = 'var(--button-active-bg)';
+    target.style.color = 'var(--button-active-text)';
   } else {
+    target.classList.remove('btn-active');
     target.style.outline = '';
     target.style.backgroundColor = '';
     target.style.color = '';
@@ -1017,8 +1009,6 @@ function populateVoiceList() {
 }
 
 function handlePlay({ target }) {
-  if (applyLengthLimitCommand()) return;
-
   if (target.className === PLAY) {
     shouldRetryPlayback = true;
     isPlaing = true;

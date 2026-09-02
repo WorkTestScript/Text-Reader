@@ -5,11 +5,12 @@
   --textarea-bg: #3d3d3d;
   --textarea-text: #e6e1e1;
   --textarea-mark-color: #737070;
-  --button-bg: #3498db;
+  --button-bg: #4f5254;
   --button-text: white;
-  --button-hover-bg: #2980b9;
-  --button-active-text: #1a1a1a;
-  --button-active-bg: #4f5254;
+  --button-hover-bg: #616467;
+  --button-active-text: #ffffff;
+  --button-active-bg: #3498db;
+  --button-active-hover-bg: #2980b9;
   --range-bg: #3498db;
   --thumb-bg: #fff;
   --thumb-border: #3498db;
@@ -29,11 +30,12 @@
   --textarea-bg: #f9f9f9;
   --textarea-text: #333333;
   --textarea-mark-color: #a0a0a0;
-  --button-bg: #5cb85c;
+  --button-bg: #4f5254;
   --button-text: white;
-  --button-hover-bg: #4cae4c;
-  --button-active-text: #1a1a1a;
-  --button-active-bg: #4f5254;
+  --button-hover-bg: #616467;
+  --button-active-text: #ffffff;
+  --button-active-bg: #5cb85c;
+  --button-active-hover-bg: #4cae4c;
   --range-bg: #5cb85c;
   --thumb-bg: #fff;
   --thumb-border: #5cb85c;
@@ -53,11 +55,12 @@
   --textarea-bg: #2B2D42;
   --textarea-text: #E0E0E0;
   --textarea-mark-color: #00BCD4;
-  --button-bg: #00BCD4;
+  --button-bg: #4f5254;
   --button-text: #FFFFFF;
-  --button-hover-bg: #00E5FF;
+  --button-hover-bg: #616467;
   --button-active-text: #1A1C2C;
-  --button-active-bg: #4f5254;
+  --button-active-bg: #00BCD4;
+  --button-active-hover-bg: #00E5FF;
   --range-bg: #00BCD4;
   --thumb-bg: #E0E0E0;
   --thumb-border: #00BCD4;
@@ -77,11 +80,12 @@
     --textarea-bg: #3c3d40;
     --textarea-text: #E0E0E0;
     --textarea-mark-color: #D9A443;
-    --button-bg: #D9A443;
+    --button-bg: #4f5254;
     --button-text: #FFFFFF;
-    --button-hover-bg: #eac16d;
+    --button-hover-bg: #616467;
     --button-active-text: #2d2a2a;
-    --button-active-bg: #4f5254;
+    --button-active-bg: #D9A443;
+    --button-active-hover-bg: #eac16d;
     --range-bg: #D9A443;
     --thumb-bg: #E0E0E0;
     --thumb-border: #D9A443;
@@ -279,7 +283,7 @@ input[type="range"]::-webkit-slider-thumb {
 
 #voices:hover,
 #font-select:hover {
-  border-color: var(--button-bg);
+  border-color: var(--button-active-bg);
   background-color: var(--select-hover-bg);
 }
 
@@ -302,14 +306,15 @@ input[type="range"]::-webkit-slider-thumb {
   font-size: 16px;
   width: 28px;
   height: 28px;
-  background-color: #5cb85c;
+  background-color: var(--button-bg);
+  color: var(--button-text);
   border-radius: 50%;
   transition: all 0.2s;
 }
 
 #font-size-increase:hover,
 #font-size-decrease:hover {
-  background-color: #4cae4c;
+  background-color: var(--button-hover-bg);
 }
 
 .mini-setting {
@@ -350,7 +355,20 @@ input[type="range"]::-webkit-slider-thumb {
 
 #autoscroll-btn.autoscroll-enabled {
   background-color: var(--button-active-bg);
-  outline: 2px solid var(--button-bg);
+  color: var(--button-active-text, #ffffff);
+  outline: 2px solid var(--button-active-bg);
+}
+
+button.btn-active,
+.btn-active {
+  background-color: var(--button-active-bg) !important;
+  color: var(--button-active-text, #ffffff) !important;
+  outline: 2px solid var(--button-active-bg) !important;
+}
+
+button.btn-active:hover,
+.btn-active:hover {
+  background-color: var(--button-active-hover-bg, var(--button-active-bg)) !important;
 }
 
 #line-loop {
@@ -383,7 +401,7 @@ input[type="range"]::-webkit-slider-thumb {
   overflow-y: auto;
   background-color: var(--modal-bg);
   color: var(--modal-text);
-  border: 2px solid var(--button-bg);
+  border: 2px solid var(--button-active-bg);
   border-radius: 8px;
   padding: 14px 18px;
   text-align: center;
@@ -477,6 +495,26 @@ input[type="range"]::-webkit-slider-thumb {
   text-align: center;
 }
 
+.modal-range-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 4px;
+}
+
+.modal-range-wrapper input[type="range"] {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.modal-range-label {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--modal-text);
+  font-family: Consolas, Monaco, monospace;
+}
+
 .modal.active {
   display: block;
 }
@@ -503,6 +541,6 @@ body {
   transform: translateY(-50%);
   height: 1.3em; /* Match the line-height for a consistent height */
   width: 4px;
-  background-color: var(--button-bg); /* Use the theme's accent color */
+  background-color: var(--button-active-bg); /* Use the theme's accent color */
   border-radius: 2px;
 }
